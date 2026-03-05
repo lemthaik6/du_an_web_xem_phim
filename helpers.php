@@ -76,3 +76,51 @@ if (!function_exists('setFlash')) {
         $_SESSION['flash'][$key] = $message;
     }
 }
+
+if (!function_exists('getFlash')) {
+    function getFlash($key, $default = null)
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!isset($_SESSION['flash'][$key])) {
+            return $default;
+        }
+
+        $value = $_SESSION['flash'][$key];
+        unset($_SESSION['flash'][$key]);
+
+        return $value;
+    }
+}
+
+if (!function_exists('auth_user')) {
+    function auth_user(): ?array
+    {
+        if (session_status() == PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $user = $_SESSION['auth_user'] ?? null;
+        return is_array($user) ? $user : null;
+    }
+}
+
+if (!function_exists('is_admin')) {
+    function is_admin(): bool
+    {
+        $user = auth_user();
+        return (bool)($user && ($user['role'] ?? null) === 'admin');
+    }
+}
+
+if (!function_exists('json')) {
+    function json(array $payload, int $status = 200): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($status);
+        echo json_encode($payload, JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+}
