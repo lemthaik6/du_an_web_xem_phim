@@ -51,7 +51,7 @@ class Movie extends Model
     public function getMovies(array $filters = []): array
     {
         $qb = $this->connection->createQueryBuilder();
-        $qb->select('m.id', 'm.title', 'm.slug', 'm.poster_url', 'm.year', 'm.country', 'm.views_count', 'm.rating_avg')
+        $qb->select('m.id', 'm.title', 'm.slug', 'm.poster_url', 'm.release_year AS year', 'm.country_id AS country', 'm.views_count')
             ->from('movies', 'm')
             ->where('m.is_published = 1');
 
@@ -61,12 +61,12 @@ class Movie extends Model
         }
 
         if (!empty($filters['year'])) {
-            $qb->andWhere('m.year = :year')
+            $qb->andWhere('m.release_year = :year')
                 ->setParameter('year', (int)$filters['year']);
         }
 
         if (!empty($filters['country'])) {
-            $qb->andWhere('m.country = :country')
+            $qb->andWhere('m.country_id = :country')
                 ->setParameter('country', $filters['country']);
         }
 
@@ -84,7 +84,7 @@ class Movie extends Model
                 $qb->orderBy('m.views_count', 'DESC');
                 break;
             case 'top_rated':
-                $qb->orderBy('m.rating_avg', 'DESC');
+                $qb->orderBy('m.views_count', 'DESC'); // Fallback since rating_avg is not in movies table
                 break;
             default:
                 $qb->orderBy('m.updated_at', 'DESC');
@@ -113,11 +113,11 @@ class Movie extends Model
                     ->setParameter('q', '%' . $filters['q'] . '%');
             }
             if (!empty($filters['year'])) {
-                $qb->andWhere('m.year = :year')
+                $qb->andWhere('m.release_year = :year')
                     ->setParameter('year', (int)$filters['year']);
             }
             if (!empty($filters['country'])) {
-                $qb->andWhere('m.country = :country')
+                $qb->andWhere('m.country_id = :country')
                     ->setParameter('country', $filters['country']);
             }
 

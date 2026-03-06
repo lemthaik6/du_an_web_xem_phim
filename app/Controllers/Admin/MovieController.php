@@ -29,7 +29,7 @@ class MovieController extends Model
         $offset = ($page - 1) * $perPage;
 
         $qb = $this->connection->createQueryBuilder();
-        $qb->select('id', 'title', 'slug', 'year', 'country', 'is_published', 'views_count')
+        $qb->select('id', 'title', 'slug', 'release_year AS year', 'country_id AS country', 'is_published', 'views_count')
             ->from('movies')
             ->orderBy('created_at', 'DESC')
             ->setFirstResult($offset)
@@ -100,8 +100,8 @@ class MovieController extends Model
                 ->values([
                     'title'       => ':title',
                     'slug'        => ':slug',
-                    'year'        => ':year',
-                    'country'     => ':country',
+                    'release_year'=> ':year',
+                    'country_id'  => ':country',
                     'description' => ':description',
                     'status'      => ':status',
                     'is_published'=> ':is_published',
@@ -232,8 +232,8 @@ class MovieController extends Model
             $qb->update('movies')
                 ->set('title', ':title')
                 ->set('slug', ':slug')
-                ->set('year', ':year')
-                ->set('country', ':country')
+                ->set('release_year', ':year')
+                ->set('country_id', ':country')
                 ->set('description', ':description')
                 ->set('status', ':status')
                 ->set('is_published', ':is_published')
