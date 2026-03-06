@@ -13,8 +13,30 @@ class HomeController
      */
     public function index()
     {
-        $movieModel = new Movie();
-        $sections = $movieModel->getHomeSections();
+        try {
+            $movieModel = new Movie();
+            $sections = $movieModel->getHomeSections();
+        } catch (\Throwable $e) {
+            error_log('HomeController error: ' . $e->getMessage());
+            // If there's an error getting movies, provide empty sections so page still displays
+            $sections = [
+                [
+                    'title' => 'Phim mới cập nhật',
+                    'slug' => 'new',
+                    'movies' => [],
+                ],
+                [
+                    'title' => 'Phim hot',
+                    'slug' => 'hot',
+                    'movies' => [],
+                ],
+                [
+                    'title' => 'Phim đề xuất',
+                    'slug' => 'recommended',
+                    'movies' => [],
+                ],
+            ];
+        }
 
         return view('home', compact('sections'));
     }

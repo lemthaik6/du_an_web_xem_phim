@@ -50,51 +50,61 @@ class Movie extends Model
      */
     public function getMovies(array $filters = []): array
     {
-        $qb = $this->connection->createQueryBuilder();
-        $qb->select('m.id', 'm.title', 'm.slug', 'm.poster_url', 'm.release_year AS year', 'm.country_id AS country', 'm.views_count')
-            ->from('movies', 'm')
-            ->where('m.is_published = 1');
-
-        if (!empty($filters['q'])) {
-            $qb->andWhere('m.title LIKE :q OR m.original_title LIKE :q')
-                ->setParameter('q', '%' . $filters['q'] . '%');
+        // If no database connection, return empty array
+        if (!$this->connection) {
+            return [];
         }
 
-        if (!empty($filters['year'])) {
-            $qb->andWhere('m.release_year = :year')
-                ->setParameter('year', (int)$filters['year']);
-        }
+        try {
+            $qb = $this->connection->createQueryBuilder();
+            $qb->select('m.id', 'm.title', 'm.slug', 'm.poster_url', 'm.release_year AS year', 'm.country_id AS country', 'm.views_count')
+                ->from('movies', 'm')
+                ->where('m.is_published = 1');
 
-        if (!empty($filters['country'])) {
-            $qb->andWhere('m.country_id = :country')
-                ->setParameter('country', $filters['country']);
-        }
+            if (!empty($filters['q'])) {
+                $qb->andWhere('m.title LIKE :q OR m.original_title LIKE :q')
+                    ->setParameter('q', '%' . $filters['q'] . '%');
+            }
 
-        if (!empty($filters['category_id'])) {
-            // Nếu dùng quan hệ many-to-many có bảng trung gian movie_category
-            $qb->innerJoin('m', 'movie_category', 'mc', 'mc.movie_id = m.id')
-                ->andWhere('mc.category_id = :cid')
-                ->setParameter('cid', (int)$filters['category_id']);
-        }
+            if (!empty($filters['year'])) {
+                $qb->andWhere('m.release_year = :year')
+                    ->setParameter('year', (int)$filters['year']);
+            }
 
-        // Sắp xếp
-        $order = $filters['order'] ?? 'latest';
-        switch ($order) {
-            case 'popular':
-                $qb->orderBy('m.views_count', 'DESC');
-                break;
-            case 'top_rated':
-                $qb->orderBy('m.views_count', 'DESC'); // Fallback since rating_avg is not in movies table
-                break;
-            default:
-                $qb->orderBy('m.updated_at', 'DESC');
-        }
+            if (!empty($filters['country'])) {
+                $qb->andWhere('m.country_id = :country')
+                    ->setParameter('country', $filters['country']);
+            }
 
-        if (!empty($filters['limit'])) {
-            $qb->setMaxResults((int)$filters['limit']);
-        }
+            if (!empty($filters['category_id'])) {
+                // Nếu dùng quan hệ many-to-many có bảng trung gian movie_category
+                $qb->innerJoin('m', 'movie_category', 'mc', 'mc.movie_id = m.id')
+                    ->andWhere('mc.category_id = :cid')
+                    ->setParameter('cid', (int)$filters['category_id']);
+            }
 
-        return $qb->fetchAllAssociative();
+            // Sắp xếp
+            $order = $filters['order'] ?? 'latest';
+            switch ($order) {
+                case 'popular':
+                    $qb->orderBy('m.views_count', 'DESC');
+                    break;
+                case 'top_rated':
+                    $qb->orderBy('m.views_count', 'DESC'); // Fallback since rating_avg is not in movies table
+                    break;
+                default:
+                    $qb->orderBy('m.updated_at', 'DESC');
+            }
+
+            if (!empty($filters['limit'])) {
+                $qb->setMaxResults((int)$filters['limit']);
+            }
+
+            return $qb->fetchAllAssociative();
+        } catch (\Throwable $e) {
+            error_log('Error fetching movies: ' . $e->getMessage());
+            return []; // Return empty array on error instead of throwing
+        }
     }
 
     /**

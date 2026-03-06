@@ -1,4 +1,4 @@
-@php($user = auth_user())
+@php($user = auth())
 
 <header class="sticky top-0 z-30 bg-gradient-to-b from-black/80 via-black/70 to-transparent backdrop-blur border-b border-zinc-900">
     <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">

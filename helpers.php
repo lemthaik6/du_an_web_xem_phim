@@ -14,27 +14,29 @@
  * @param bool $return If true, return output instead of echoing
  * @return string|void
  */
-function view(string $view, array $data = [], bool $return = false)
-{
-    try {
-        $blade = $GLOBALS['blade'] ?? null;
-        
-        if (!$blade) {
-            throw new \Exception('Blade template engine not initialized');
+if (!function_exists('view')) {
+    function view(string $view, array $data = [], bool $return = false)
+    {
+        try {
+            $blade = $GLOBALS['blade'] ?? null;
+            
+            if (!$blade) {
+                throw new \Exception('Blade template engine not initialized');
+            }
+            
+            $output = $blade->run($view, $data);
+            
+            if ($return) {
+                return $output;
+            }
+            
+            echo $output;
+            exit;
+        } catch (\Exception $e) {
+            http_response_code(500);
+            echo "Lỗi: " . htmlspecialchars($e->getMessage());
+            exit;
         }
-        
-        $output = $blade->run($view, $data);
-        
-        if ($return) {
-            return $output;
-        }
-        
-        echo $output;
-        exit;
-    } catch (\Exception $e) {
-        http_response_code(500);
-        echo "Lỗi: " . htmlspecialchars($e->getMessage());
-        exit;
     }
 }
 
@@ -46,12 +48,14 @@ function view(string $view, array $data = [], bool $return = false)
  * @param int $flags JSON encoding flags
  * @return void
  */
-function json(array $data, int $statusCode = 200, int $flags = JSON_UNESCAPED_UNICODE)
-{
-    header('Content-Type: application/json; charset=utf-8');
-    http_response_code($statusCode);
-    echo json_encode($data, $flags);
-    exit;
+if (!function_exists('json')) {
+    function json(array $data, int $statusCode = 200, int $flags = JSON_UNESCAPED_UNICODE)
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        http_response_code($statusCode);
+        echo json_encode($data, $flags);
+        exit;
+    }
 }
 
 /**
@@ -61,11 +65,13 @@ function json(array $data, int $statusCode = 200, int $flags = JSON_UNESCAPED_UN
  * @param int $statusCode HTTP status code (302 temporary, 301 permanent)
  * @return void
  */
-function redirect(string $url, int $statusCode = 302)
-{
-    http_response_code($statusCode);
-    header('Location: ' . $url);
-    exit;
+if (!function_exists('redirect')) {
+    function redirect(string $url, int $statusCode = 302)
+    {
+        http_response_code($statusCode);
+        header('Location: ' . $url);
+        exit;
+    }
 }
 
 /**
@@ -74,12 +80,14 @@ function redirect(string $url, int $statusCode = 302)
  * @param string $message Optional error message
  * @return void
  */
-function redirect404(string $message = 'Trang không tồn tại')
-{
-    header('Content-Type: text/html; charset=utf-8');
-    http_response_code(404);
-    echo '<h1>404 - Không tìm thấy</h1><p>' . htmlspecialchars($message) . '</p>';
-    exit;
+if (!function_exists('redirect404')) {
+    function redirect404(string $message = 'Trang không tồn tại')
+    {
+        header('Content-Type: text/html; charset=utf-8');
+        http_response_code(404);
+        echo '<h1>404 - Không tìm thấy</h1><p>' . htmlspecialchars($message) . '</p>';
+        exit;
+    }
 }
 
 /**
@@ -88,20 +96,22 @@ function redirect404(string $message = 'Trang không tồn tại')
  * @param string $key Message key (e.g. 'error', 'success', 'warning')
  * @return string|null The message or null if not found
  */
-function getFlash(string $key): ?string
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+if (!function_exists('getFlash')) {
+    function getFlash(string $key): ?string
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        $message = $_SESSION['flash'][$key] ?? null;
+        
+        // Clear the message after retrieving it
+        if (isset($_SESSION['flash'][$key])) {
+            unset($_SESSION['flash'][$key]);
+        }
+        
+        return $message;
     }
-    
-    $message = $_SESSION['flash'][$key] ?? null;
-    
-    // Clear the message after retrieving it
-    if (isset($_SESSION['flash'][$key])) {
-        unset($_SESSION['flash'][$key]);
-    }
-    
-    return $message;
 }
 
 /**
@@ -111,17 +121,19 @@ function getFlash(string $key): ?string
  * @param string $message The message to store
  * @return void
  */
-function setFlash(string $key, string $message)
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+if (!function_exists('setFlash')) {
+    function setFlash(string $key, string $message)
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        if (!isset($_SESSION['flash'])) {
+            $_SESSION['flash'] = [];
+        }
+        
+        $_SESSION['flash'][$key] = $message;
     }
-    
-    if (!isset($_SESSION['flash'])) {
-        $_SESSION['flash'] = [];
-    }
-    
-    $_SESSION['flash'][$key] = $message;
 }
 
 /**
@@ -129,13 +141,15 @@ function setFlash(string $key, string $message)
  * 
  * @return array|null User array with id, name, email, role, or null if not logged in
  */
-function auth(): ?array
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        session_start();
+if (!function_exists('auth')) {
+    function auth(): ?array
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
+        return $_SESSION['auth_user'] ?? null;
     }
-    
-    return $_SESSION['auth_user'] ?? null;
 }
 
 /**
@@ -143,9 +157,11 @@ function auth(): ?array
  * 
  * @return bool True if logged in
  */
-function isAuthenticated(): bool
-{
-    return auth() !== null;
+if (!function_exists('isAuthenticated')) {
+    function isAuthenticated(): bool
+    {
+        return auth() !== null;
+    }
 }
 
 /**
@@ -154,10 +170,12 @@ function isAuthenticated(): bool
  * @param string $role Role to check
  * @return bool
  */
-function hasRole(string $role): bool
-{
-    $user = auth();
-    return $user && ($user['role'] ?? null) === $role;
+if (!function_exists('hasRole')) {
+    function hasRole(string $role): bool
+    {
+        $user = auth();
+        return $user && ($user['role'] ?? null) === $role;
+    }
 }
 
 /**
@@ -165,28 +183,30 @@ function hasRole(string $role): bool
  * 
  * @return \Doctrine\DBAL\Connection|null
  */
-function getConnection(): ?\Doctrine\DBAL\Connection
-{
-    static $connection = null;
-    
-    if ($connection === null) {
-        try {
-            $connectionParams = [
-                'user'      => $_ENV['DB_USERNAME'] ?? 'root',
-                'password'  => $_ENV['DB_PASSWORD'] ?? '',
-                'dbname'    => $_ENV['DB_NAME'] ?? 'du_an_web_xem_phim',
-                'host'      => $_ENV['DB_HOST'] ?? 'localhost',
-                'driver'    => $_ENV['DB_DRIVER'] ?? 'pdo_mysql',
-                'port'      => $_ENV['DB_PORT'] ?? 3306,
-            ];
-            
-            $connection = \Doctrine\DBAL\DriverManager::getConnection($connectionParams);
-        } catch (\Exception $e) {
-            // Log error but don't crash; some routes are public
+if (!function_exists('getConnection')) {
+    function getConnection(): ?\Doctrine\DBAL\Connection
+    {
+        static $connection = null;
+        
+        if ($connection === null) {
+            try {
+                $connectionParams = [
+                    'user'      => $_ENV['DB_USERNAME'] ?? 'root',
+                    'password'  => $_ENV['DB_PASSWORD'] ?? '',
+                    'dbname'    => $_ENV['DB_NAME'] ?? 'du_an_web_xem_phim',
+                    'host'      => $_ENV['DB_HOST'] ?? 'localhost',
+                    'driver'    => $_ENV['DB_DRIVER'] ?? 'pdo_mysql',
+                    'port'      => $_ENV['DB_PORT'] ?? 3306,
+                ];
+                
+                $connection = \Doctrine\DBAL\DriverManager::getConnection($connectionParams);
+            } catch (\Exception $e) {
+                // Log error but don't crash; some routes are public
+            }
         }
+        
+        return $connection;
     }
-    
-    return $connection;
 }
 
 /**
@@ -196,13 +216,15 @@ function getConnection(): ?\Doctrine\DBAL\Connection
  * @param string $format Output format (default: d/m/Y H:i)
  * @return string Formatted date
  */
-function formatDate(string $date, string $format = 'd/m/Y H:i'): string
-{
-    try {
-        $timestamp = strtotime($date);
-        return $timestamp ? date($format, $timestamp) : $date;
-    } catch (\Exception $e) {
-        return $date;
+if (!function_exists('formatDate')) {
+    function formatDate(string $date, string $format = 'd/m/Y H:i'): string
+    {
+        try {
+            $timestamp = strtotime($date);
+            return $timestamp ? date($format, $timestamp) : $date;
+        } catch (\Exception $e) {
+            return $date;
+        }
     }
 }
 
@@ -214,13 +236,15 @@ function formatDate(string $date, string $format = 'd/m/Y H:i'): string
  * @param string $suffix Suffix to add (default: ...)
  * @return string
  */
-function truncate(string $text, int $length = 100, string $suffix = '...'): string
-{
-    if (strlen($text) <= $length) {
-        return $text;
+if (!function_exists('truncate')) {
+    function truncate(string $text, int $length = 100, string $suffix = '...'): string
+    {
+        if (strlen($text) <= $length) {
+            return $text;
+        }
+        
+        return substr($text, 0, $length) . $suffix;
     }
-    
-    return substr($text, 0, $length) . $suffix;
 }
 
 /**
@@ -230,9 +254,11 @@ function truncate(string $text, int $length = 100, string $suffix = '...'): stri
  * @param mixed $default Default value if not found
  * @return mixed
  */
-function env(string $key, $default = null)
-{
-    return $_ENV[$key] ?? $default;
+if (!function_exists('env')) {
+    function env(string $key, $default = null)
+    {
+        return $_ENV[$key] ?? $default;
+    }
 }
 
 /**
@@ -241,20 +267,11 @@ function env(string $key, $default = null)
  * @param string $text Text to escape
  * @return string Escaped text
  */
-function esc(string $text): string
-{
-    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Convert slug to readable title
- * 
- * @param string $slug Slug (e.g., "the-avengers-endgame")
- * @return string Title (e.g., "The Avengers Endgame")
- */
-function slugToTitle(string $slug): string
-{
-    return ucwords(str_replace(['-', '_'], ' ', $slug));
+if (!function_exists('esc')) {
+    function esc(string $text): string
+    {
+        return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    }
 }
 
 /**
@@ -263,10 +280,56 @@ function slugToTitle(string $slug): string
  * @param string $title Title (e.g., "The Avengers Endgame")
  * @return string Slug (e.g., "the-avengers-endgame")
  */
-function titleToSlug(string $title): string
-{
-    $title = strtolower($title);
-    $title = preg_replace('/[^a-z0-9]+/', '-', $title);
-    $title = trim($title, '-');
-    return $title;
+if (!function_exists('titleToSlug')) {
+    function titleToSlug(string $title): string
+    {
+        $title = strtolower($title);
+        $title = preg_replace('/[^a-z0-9]+/', '-', $title);
+        $title = trim($title, '-');
+        return $title;
+    }
+}
+
+/**
+ * Generate a URL for a given route path
+ * 
+ * @param string $path The path (e.g., '/phim/slug' or '/tim-kiem')
+ * @param array $params Optional query parameters
+ * @return string The full URL
+ */
+if (!function_exists('route')) {
+    function route(string $path, array $params = []): string
+    {
+        $baseUrl = rtrim($_ENV['APP_URL'] ?? env('APP_URL', 'http://localhost/du_an_ca_nhan/du_an_web_xem_phim/'), '/');
+        $url = $baseUrl . $path;
+        
+        if (!empty($params)) {
+            $url .= '?' . http_build_query($params);
+        }
+        
+        return $url;
+    }
+}
+
+/**
+ * Get file URL (for uploads, posters, etc)
+ * 
+ * @param string $path File path (e.g., 'uploads/poster.jpg')
+ * @return string The full file URL
+ */
+if (!function_exists('file_url')) {
+    function file_url(string $path): string
+    {
+        if (empty($path)) {
+            return '';
+        }
+        
+        // If already a full URL, return as is
+        if (strpos($path, 'http://') === 0 || strpos($path, 'https://') === 0) {
+            return $path;
+        }
+        
+        $baseUrl = rtrim($_ENV['APP_URL'] ?? env('APP_URL', 'http://localhost/du_an_ca_nhan/du_an_web_xem_phim/'), '/');
+        return $baseUrl . '/' . ltrim($path, '/');
+    }
 }

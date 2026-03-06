@@ -23,7 +23,9 @@ class Model
         try {
             $this->connection = DriverManager::getConnection($connectionParams);
         } catch (Exception $e) {
-            die('Lỗi kết nối CSDL: ' . $e->getMessage());
+            // Log the error but don't die - allow graceful degradation
+            error_log('Database connection error: ' . $e->getMessage());
+            $this->connection = null;
         }
     }
 

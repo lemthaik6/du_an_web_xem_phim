@@ -37,42 +37,51 @@ class AuthController extends Model
         $email = $_POST['email'];
         $password = $_POST['password'];
 
-        // Giả định bảng users với các cột: id, name, email, password, role
-        $qb = $this->connection->createQueryBuilder();
-        $user = $qb->select('*')
-            ->from('users')
-            ->where('email = :email')
-            ->setParameter('email', $email)
-            ->setMaxResults(1)
-            ->fetchAssociative();
+        try {
+            // Tìm user theo email
+            $qb = $this->connection->createQueryBuilder();
+            $user = $qb->select('*')
+                ->from('users')
+                ->where('email = :email')
+                ->setParameter('email', $email)
+                ->setMaxResults(1)
+                ->fetchAssociative();
 
-        if (!$user || !password_verify($password, $user['password'] ?? '')) {
-            return $this->respondAuthError('Email hoặc mật khẩu không đúng');
+            if (!$user || !password_verify($password, $user['password_hash'] ?? '')) {
+                return $this->respondAuthError('Email hoặc mật khẩu không đúng');
+            }
+
+            $_SESSION['auth_user'] = [
+                'id'    => $user['id'],
+                'name'  => $user['display_name'] ?? $user['username'] ?? $user['email'],
+                'email' => $user['email'],
+                'role'  => $user['role_id'] ?? 'user',
+            ];
+
+            if ($this->isAjax()) {
+                json([
+                    'ok'      => true,
+                    'message' => 'Đăng nhập thành công',
+                ]);
+            }
+
+            setFlash('success', 'Đăng nhập thành công');
+            redirect('/');
+        } catch (\Throwable $e) {
+            error_log('Login error: ' . $e->getMessage());
+            return $this->respondAuthError('Lỗi hệ thống: ' . $e->getMessage());
         }
-
-        $_SESSION['auth_user'] = [
-            'id'    => $user['id'],
-            'name'  => $user['name'] ?? ($user['username'] ?? $user['email']),
-            'email' => $user['email'],
-            'role'  => $user['role'] ?? 'user',
-        ];
-
-        if ($this->isAjax()) {
-            json([
-                'ok'      => true,
-                'message' => 'Đăng nhập thành công',
-            ]);
-        }
-
-        setFlash('success', 'Đăng nhập thành công');
-        redirect('/');
     }
 
     public function register()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         $validator = new Validator();
         $validation = $validator->make($_POST, [
-            'name'                  => 'required|min:3',
+            'username'              => 'required|min:3',
             'email'                 => 'required|email',
             'password'              => 'required|min:6',
             'password_confirmation' => 'required|same:password',
@@ -84,46 +93,61 @@ class AuthController extends Model
             return $this->respondAuthError('Dữ liệu không hợp lệ', $errors);
         }
 
-        $name = $_POST['name'];
+        $username = $_POST['username'];
         $email = $_POST['email'];
-        $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+        $passwordHash = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
-        // Kiểm tra tồn tại
-        $qb = $this->connection->createQueryBuilder();
-        $exists = $qb->select('COUNT(*) as c')
-            ->from('users')
-            ->where('email = :email')
-            ->setParameter('email', $email)
-            ->fetchOne();
+        try {
+            // Kiểm tra email đã tồn tại
+            $qb = $this->connection->createQueryBuilder();
+            $exists = $qb->select('COUNT(*) as c')
+                ->from('users')
+                ->where('email = :email')
+                ->setParameter('email', $email)
+                ->fetchOne();
 
-        if ((int)$exists > 0) {
-            return $this->respondAuthError('Email đã được sử dụng');
-        }
+            if ((int)$exists > 0) {
+                return $this->respondAuthError('Email này đã được đăng ký');
+            }
 
-        // Thêm user mới với role mặc định là user
-        $qb = $this->connection->createQueryBuilder();
-        $qb->insert('users')
-            ->values([
-                'name'     => ':name',
-                'email'    => ':email',
-                'password' => ':password',
-                'role'     => ':role',
-            ])
-            ->setParameter('name', $name)
-            ->setParameter('email', $email)
-            ->setParameter('password', $password)
-            ->setParameter('role', 'user')
-            ->executeQuery();
+            // Kiểm tra username đã tồn tại
+            $qb = $this->connection->createQueryBuilder();
+            $exists = $qb->select('COUNT(*) as c')
+                ->from('users')
+                ->where('username = :username')
+                ->setParameter('username', $username)
+                ->fetchOne();
 
-        if ($this->isAjax()) {
-            json([
-                'ok'      => true,
-                'message' => 'Đăng ký thành công, vui lòng đăng nhập',
+            if ((int)$exists > 0) {
+                return $this->respondAuthError('Tên tài khoản này đã được sử dụng');
+            }
+
+            // Tạo user mới
+            $this->connection->insert('users', [
+                'username'     => $username,
+                'email'        => $email,
+                'password_hash' => $passwordHash,
+                'display_name' => $username,
+                'role_id'      => 2,
+                'status'       => 'active',
+                'created_at'   => date('Y-m-d H:i:s'),
+                'updated_at'   => date('Y-m-d H:i:s'),
             ]);
-        }
 
-        setFlash('success', 'Đăng ký thành công, vui lòng đăng nhập');
-        redirect('/dang-nhap');
+            if ($this->isAjax()) {
+                json([
+                    'ok'      => true,
+                    'message' => 'Đăng ký thành công, vui lòng đăng nhập',
+                ]);
+            }
+
+            setFlash('success', 'Đăng ký thành công, vui lòng đăng nhập');
+            redirect('/dang-nhap');
+
+        } catch (\Throwable $e) {
+            error_log('Registration error: ' . $e->getMessage());
+            return $this->respondAuthError('Lỗi khi tạo tài khoản: ' . $e->getMessage());
+        }
     }
 
     public function logout()

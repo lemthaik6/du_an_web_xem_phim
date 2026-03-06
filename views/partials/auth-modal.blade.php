@@ -60,11 +60,13 @@
             data-mode="register"
         >
             <div class="space-y-1">
-                <label class="text-xs text-zinc-300">Họ tên</label>
+                <label class="text-xs text-zinc-300">Tên tài khoản</label>
                 <input
                     type="text"
-                    name="name"
+                    name="username"
+                    placeholder="Tên tài khoản đăng nhập"
                     class="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    required
                 />
             </div>
             <div class="space-y-1">
@@ -72,7 +74,9 @@
                 <input
                     type="email"
                     name="email"
+                    placeholder="your@email.com"
                     class="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    required
                 />
             </div>
             <div class="space-y-1">
@@ -80,7 +84,9 @@
                 <input
                     type="password"
                     name="password"
+                    placeholder="Ít nhất 6 ký tự"
                     class="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    required
                 />
             </div>
             <div class="space-y-1">
@@ -88,7 +94,9 @@
                 <input
                     type="password"
                     name="password_confirmation"
+                    placeholder="Nhập lại mật khẩu"
                     class="w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    required
                 />
             </div>
             <button
