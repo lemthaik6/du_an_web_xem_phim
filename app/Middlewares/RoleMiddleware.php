@@ -15,9 +15,17 @@ class RoleMiddleware
         }
 
         $user = $_SESSION['auth_user'] ?? null;
-        $userRole = is_array($user) ? ($user['role'] ?? null) : null;
+        $userRoleId = is_array($user) ? ($user['role'] ?? null) : null;
 
-        if ($userRole !== $role) {
+        // Map role names to role IDs
+        $roleMap = [
+            'admin' => 1,
+            'user'  => 2,
+        ];
+
+        $requiredRoleId = $roleMap[$role] ?? null;
+
+        if ($userRoleId !== $requiredRoleId) {
             header('Content-Type: text/html; charset=utf-8');
             http_response_code(403);
             echo '403 Forbidden';
