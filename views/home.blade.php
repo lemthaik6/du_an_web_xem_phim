@@ -38,18 +38,54 @@
                 </a>
             </div>
 
-            {{-- Skeleton khi chưa có dữ liệu (demo) --}}
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
-                @for($i = 0; $i < 6; $i++)
-                    <div class="group relative bg-zinc-900/80 rounded-md overflow-hidden">
-                        <div class="aspect-[2/3] bg-zinc-800 animate-pulse"></div>
-                        <div class="p-2 space-y-1">
-                            <div class="h-3 bg-zinc-800 rounded w-3/4 animate-pulse"></div>
-                            <div class="h-2 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
+            @php($movies = $section['movies'] ?? [])
+            @if(empty($movies))
+                {{-- Skeleton khi chưa có dữ liệu --}}
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    @for($i = 0; $i < 6; $i++)
+                        <div class="group relative bg-zinc-900/80 rounded-md overflow-hidden">
+                            <div class="aspect-[2/3] bg-zinc-800 animate-pulse"></div>
+                            <div class="p-2 space-y-1">
+                                <div class="h-3 bg-zinc-800 rounded w-3/4 animate-pulse"></div>
+                                <div class="h-2 bg-zinc-800 rounded w-1/2 animate-pulse"></div>
+                            </div>
                         </div>
-                    </div>
-                @endfor
-            </div>
+                    @endfor
+                </div>
+            @else
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3">
+                    @foreach($movies as $movie)
+                        <a
+                            href="{{ route('/phim/' . $movie['slug']) }}"
+                            class="group relative bg-zinc-900/80 rounded-md overflow-hidden"
+                        >
+                            <div class="aspect-[2/3] bg-zinc-800 overflow-hidden">
+                                @if(!empty($movie['poster_url']))
+                                    <img
+                                        src="{{ file_url($movie['poster_url']) }}"
+                                        alt="{{ $movie['title'] }}"
+                                        loading="lazy"
+                                        class="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
+                                    >
+                                @else
+                                    <div class="w-full h-full flex items-center justify-center text-[11px] text-zinc-500">
+                                        Poster đang cập nhật
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="p-2">
+                                <div class="text-xs font-medium text-zinc-100 group-hover:text-white line-clamp-2 mb-1">
+                                    {{ $movie['title'] }}
+                                </div>
+                                <div class="flex items-center justify-between text-[11px] text-zinc-400">
+                                    <span>{{ $movie['year'] ?? 'Đang cập nhật' }}</span>
+                                    <span>{{ $movie['country'] ?? '' }}</span>
+                                </div>
+                            </div>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
         </section>
     @endforeach
 @endsection

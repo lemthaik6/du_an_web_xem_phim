@@ -3,6 +3,19 @@
 @section('title', 'Xem ' . $movie['title'] . ' - Tập ' . ($currentEpisode['episode_number'] ?? '?'))
 
 @section('content')
+    @php
+        $prevEp = null;
+        $nextEp = null;
+        if (!empty($episodes) && !empty($currentEpisode['episode_number'])) {
+            $numbers = array_column($episodes, 'episode_number');
+            $idx = array_search($currentEpisode['episode_number'], $numbers, true);
+            if ($idx !== false) {
+                $prevEp = $episodes[$idx - 1]['episode_number'] ?? null;
+                $nextEp = $episodes[$idx + 1]['episode_number'] ?? null;
+            }
+        }
+    @endphp
+
     <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,3fr),minmax(260px,1fr)] gap-6">
         <div>
             <div class="mb-3">
@@ -18,10 +31,22 @@
             </div>
 
             <div class="aspect-video bg-black rounded-2xl overflow-hidden border border-zinc-800 mb-3">
-                <div class="w-full h-full flex items-center justify-center text-zinc-500 text-xs md:text-sm">
-                    Player video demo<br>
-                    (sau này gắn iframe / HTML5 video từ nguồn thật)
-                </div>
+                @if(!empty($sources[0]['url']))
+                    <video
+                        id="movie-player"
+                        controls
+                        class="w-full h-full"
+                        poster="{{ $movie['banner_url'] ? file_url($movie['banner_url']) : '' }}"
+                    >
+                        <source src="{{ $sources[0]['url'] }}" type="video/mp4">
+                        Trình duyệt của bạn không hỗ trợ thẻ video.
+                    </video>
+                @else
+                    <div class="w-full h-full flex items-center justify-center text-zinc-500 text-xs md:text-sm">
+                        Player video demo<br>
+                        (chưa có nguồn video cho tập này)
+                    </div>
+                @endif
             </div>
 
             <div class="flex flex-wrap items-center gap-3 mb-4">
@@ -37,10 +62,32 @@
                 </div>
                 <button
                     type="button"
+                    id="save-progress-btn"
+                    data-movie-id="{{ $movie['id'] }}"
+                    data-episode-number="{{ $currentEpisode['episode_number'] ?? 0 }}"
                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-700 text-xs"
                 >
                     💾 Lưu tiến độ xem
                 </button>
+
+                <div class="flex items-center gap-2 text-xs">
+                    @if($prevEp)
+                        <a
+                            href="{{ route('/xem/' . $movie['slug'] . '/' . $prevEp) }}"
+                            class="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-700 hover:bg-zinc-800"
+                        >
+                            ⏮ Tập trước
+                        </a>
+                    @endif
+                    @if($nextEp)
+                        <a
+                            href="{{ route('/xem/' . $movie['slug'] . '/' . $nextEp) }}"
+                            class="px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-700 hover:bg-zinc-800"
+                        >
+                            Tập sau ⏭
+                        </a>
+                    @endif
+                </div>
             </div>
 
             <div class="bg-zinc-900/70 rounded-2xl border border-zinc-800 p-4 mb-6">
@@ -97,5 +144,46 @@
             </div>
         </aside>
     </div>
+
+    <script>
+        (function () {
+            const btn = document.getElementById('save-progress-btn');
+            if (!btn) return;
+
+            const movieId = parseInt(btn.dataset.movieId || '0', 10);
+            const episodeNumber = parseInt(btn.dataset.episodeNumber || '0', 10);
+            const player = document.getElementById('movie-player');
+
+            btn.addEventListener('click', async () => {
+                let progress = 0;
+                if (player && player.duration) {
+                    progress = Math.round((player.currentTime / player.duration) * 100);
+                } else {
+                    progress = 100;
+                }
+
+                try {
+                    const formData = new FormData();
+                    formData.append('movie_id', String(movieId));
+                    formData.append('episode_number', String(episodeNumber));
+                    formData.append('progress', String(progress));
+
+                    const res = await fetch('{{ route('/api/lich-su-xem/upsert') }}', {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData,
+                    });
+                    const data = await res.json();
+                    if (data.ok) {
+                        showToast(data.message || 'Đã lưu tiến độ xem');
+                    } else {
+                        showToast(data.error || 'Không thể lưu tiến độ', 'error');
+                    }
+                } catch (e) {
+                    showToast('Không thể kết nối máy chủ', 'error');
+                }
+            });
+        })();
+    </script>
 @endsection
 

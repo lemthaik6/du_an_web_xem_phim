@@ -79,7 +79,12 @@
         </div>
     @else
         <div class="flex items-center justify-between mb-3 text-xs text-zinc-400">
-            <span>Đã tìm thấy {{ count($movies) }} kết quả (demo).</span>
+            <span>
+                Đã tìm thấy {{ $total }} kết quả.
+            </span>
+            @if($total > $perPage)
+                <span>Trang {{ $page }}</span>
+            @endif
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
@@ -94,24 +99,31 @@
                             {{ $movie['title'] }}
                         </div>
                         <div class="flex items-center justify-between text-[11px] text-zinc-400">
-                            <span>{{ $movie['year'] }}</span>
-                            @if(!empty($movie['categories'][0] ?? null))
-                                <span>{{ $movie['categories'][0] }}</span>
-                            @endif
+                            <span>{{ $movie['year'] ?? 'Đang cập nhật' }}</span>
+                            <span>{{ $movie['country'] ?? '' }}</span>
                         </div>
                     </div>
                 </a>
             @endforeach
         </div>
 
-        <div class="mt-4 flex justify-center">
-            <div class="inline-flex items-center gap-1 text-xs text-zinc-400">
-                <span class="px-2 py-1 rounded-md bg-zinc-900 border border-zinc-800">1</span>
-                <span class="px-2 py-1 rounded-md hover:bg-zinc-900 border border-zinc-800 cursor-pointer">2</span>
-                <span class="px-2 py-1 rounded-md hover:bg-zinc-900 border border-zinc-800 cursor-pointer">3</span>
-                <span class="px-2 py-1 rounded-md hover:bg-zinc-900 border border-zinc-800 cursor-pointer">...</span>
+        @php
+            $totalPages = max(1, ceil($total / $perPage));
+        @endphp
+        @if($totalPages > 1)
+            <div class="mt-4 flex justify-center">
+                <div class="inline-flex items-center gap-1 text-xs text-zinc-400">
+                    @for($p = 1; $p <= $totalPages; $p++)
+                        <a
+                            href="{{ route('/tim-kiem') . '?' . http_build_query(array_merge($filters, ['page' => $p])) }}"
+                            class="px-2 py-1 rounded-md border border-zinc-800 {{ $p === $page ? 'bg-zinc-900' : 'hover:bg-zinc-900' }}"
+                        >
+                            {{ $p }}
+                        </a>
+                    @endfor
+                </div>
             </div>
-        </div>
+        @endif
     @endif
 @endsection
 

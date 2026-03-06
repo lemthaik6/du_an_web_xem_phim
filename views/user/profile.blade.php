@@ -25,20 +25,61 @@
                 </div>
             </div>
 
-            <div class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 text-xs space-y-2">
-                <div class="font-semibold text-zinc-200 mb-1">Tùy chọn</div>
-                <button
-                    type="button"
-                    class="w-full text-left px-3 py-2 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-xs"
-                >
-                    Đổi mật khẩu (UI placeholder)
-                </button>
-                <button
-                    type="button"
-                    class="w-full text-left px-3 py-2 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-xs"
-                >
-                    Cập nhật avatar (UI placeholder)
-                </button>
+            <div class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4 text-xs space-y-3">
+                <div class="font-semibold text-zinc-200">Cập nhật thông tin</div>
+                <form action="{{ route('/tai-khoan/cap-nhat') }}" method="post" class="space-y-2">
+                    <div class="space-y-1">
+                        <label class="text-[11px] text-zinc-400">Họ tên hiển thị</label>
+                        <input
+                            type="text"
+                            name="name"
+                            value="{{ $user['name'] ?? '' }}"
+                            class="w-full bg-zinc-950 border border-zinc-700 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                    </div>
+                    <button
+                        type="submit"
+                        class="w-full text-left px-3 py-1.5 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold"
+                    >
+                        Lưu thay đổi
+                    </button>
+                </form>
+
+                <div class="pt-3 border-t border-zinc-800">
+                    <div class="font-semibold text-zinc-200 mb-1">Đổi mật khẩu</div>
+                    <form action="{{ route('/tai-khoan/doi-mat-khau') }}" method="post" class="space-y-2">
+                        <div class="space-y-1">
+                            <label class="text-[11px] text-zinc-400">Mật khẩu hiện tại</label>
+                            <input
+                                type="password"
+                                name="current_password"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] text-zinc-400">Mật khẩu mới</label>
+                            <input
+                                type="password"
+                                name="password"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] text-zinc-400">Nhập lại mật khẩu mới</label>
+                            <input
+                                type="password"
+                                name="password_confirmation"
+                                class="w-full bg-zinc-950 border border-zinc-700 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                        </div>
+                        <button
+                            type="submit"
+                            class="w-full text-left px-3 py-1.5 rounded-md bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold"
+                        >
+                            Cập nhật mật khẩu
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
 
@@ -90,7 +131,7 @@
                                         {{ $item['title'] }}
                                     </div>
                                     <div class="text-[11px] text-zinc-400">
-                                        Tập {{ $item['episode'] }} · Đã xem {{ $item['progress'] }}%
+                                        Tập {{ $item['episode_number'] ?? $item['episode'] ?? '?' }} · Đã xem {{ $item['progress'] }}%
                                     </div>
                                 </div>
                                 <div class="w-20 h-1.5 rounded-full bg-zinc-800 overflow-hidden">

@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Models\Movie;
+
 class SearchController
 {
     public function index()
@@ -11,28 +13,44 @@ class SearchController
         $genre = $_GET['genre'] ?? '';
         $country = $_GET['country'] ?? '';
 
-        // Dữ liệu demo – sau này thay bằng query DB + pagination
+        $filters = [
+            'q'       => $q,
+            'year'    => $year,
+            'country' => $country,
+        ];
+
+        // Chuyển genre thành category_id nếu bạn lưu slug thể loại
+        if ($genre) {
+            // Ở mức tối thiểu, truyền luôn slug để sau này mở rộng; hiện tại Movie::getMovies sẽ không dùng nếu không có bảng movie_category
+            $filters['genre_slug'] = $genre;
+        }
+
+        // Đơn giản hoá: phân trang dạng ?page=1,2,3...
+        $page = max(1, (int)($_GET['page'] ?? 1));
+        $perPage = 24;
+
+        $movieModel = new Movie();
         $movies = [];
+        $total = 0;
         if ($q || $genre || $year || $country) {
-            $movies = [
-                [
-                    'title' => 'Kết quả demo 1',
-                    'slug' => 'ket-qua-demo-1',
-                    'year' => 2024,
-                    'categories' => ['Hành động'],
-                ],
-                [
-                    'title' => 'Kết quả demo 2',
-                    'slug' => 'ket-qua-demo-2',
-                    'year' => 2023,
-                    'categories' => ['Tâm lý'],
-                ],
-            ];
+            $total = $movieModel->countForSearch($filters);
+
+            // Lấy danh sách phim trang hiện tại
+            $movies = $movieModel->getMovies(array_merge($filters, [
+                'order' => 'latest',
+                'limit' => $perPage,
+            ]));
         }
 
         $filters = compact('q', 'year', 'genre', 'country');
 
-        return view('search.index', compact('movies', 'filters'));
+        return view('search.index', [
+            'movies'  => $movies,
+            'filters' => $filters,
+            'page'    => $page,
+            'total'   => $total,
+            'perPage' => $perPage,
+        ]);
     }
 }
 

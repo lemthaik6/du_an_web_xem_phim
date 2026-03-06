@@ -38,6 +38,9 @@ $router->before('GET|POST', '/tai-khoan.*', function () {
     \App\Middlewares\AuthMiddleware::handle();
 });
 $router->get('/tai-khoan', ProfileController::class . '@index');
+// Cập nhật thông tin cá nhân & đổi mật khẩu
+$router->post('/tai-khoan/cap-nhat', ProfileController::class . '@updateProfile');
+$router->post('/tai-khoan/doi-mat-khau', ProfileController::class . '@changePassword');
 
 // User actions (AJAX)
 $router->before('POST', '/api/(binh-luan|yeu-thich|lich-su-xem).*', function () {

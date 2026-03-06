@@ -1,23 +1,20 @@
 <?php
+
 namespace App\Controllers;
+
+use App\Models\Movie;
 
 class HomeController
 {
+    /**
+     * Trang chủ:
+     * - Banner slider (hiện tại là UI tĩnh)
+     * - Các section phim: mới cập nhật, hot, đề xuất
+     */
     public function index()
     {
-        // Dữ liệu demo: sau này thay bằng query từ DB (phim mới, hot, đề xuất, theo thể loại)
-        $sections = [
-            [
-                'title' => 'Phim mới cập nhật',
-                'slug'  => 'new',
-                'movies' => [],
-            ],
-            [
-                'title' => 'Phim hot',
-                'slug'  => 'hot',
-                'movies' => [],
-            ],
-        ];
+        $movieModel = new Movie();
+        $sections = $movieModel->getHomeSections();
 
         return view('home', compact('sections'));
     }

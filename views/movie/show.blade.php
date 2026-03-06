@@ -83,6 +83,8 @@
                     </a>
                     <button
                         type="button"
+                        id="favorite-toggle-btn"
+                        data-movie-id="{{ $movie['id'] }}"
                         class="inline-flex items-center gap-2 px-4 py-2 rounded-md border border-zinc-600 hover:border-primary-500 text-sm"
                     >
                         ☆ Thêm vào yêu thích
@@ -111,7 +113,7 @@
                 <div class="space-y-4">
                     @php($user = auth_user())
                     @if($user)
-                        <form id="comment-form" class="space-y-2">
+                        <form id="comment-form" class="space-y-2" data-movie-id="{{ $movie['id'] }}">
                             <textarea
                                 name="content"
                                 rows="3"
@@ -143,7 +145,7 @@
 
                     <div id="comments-list" class="space-y-3 text-sm">
                         <p class="text-zinc-500 text-xs">
-                            Bình luận sẽ hiển thị tại đây sau khi kết nối với cơ sở dữ liệu.
+                            Đang tải bình luận...
                         </p>
                     </div>
                 </div>
@@ -169,5 +171,100 @@
             @endforeach
         </div>
     </div>
+
+    <script>
+        (function () {
+            const movieId = {{ (int)$movie['id'] }};
+
+            // Toggle yêu thích
+            const favBtn = document.getElementById('favorite-toggle-btn');
+            if (favBtn) {
+                favBtn.addEventListener('click', async () => {
+                    try {
+                        const formData = new FormData();
+                        formData.append('movie_id', String(movieId));
+                        const res = await fetch('{{ route('/api/yeu-thich/toggle') }}', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            body: formData,
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            showToast(data.message || 'Cập nhật yêu thích thành công');
+                            favBtn.textContent = data.isFavorite ? '★ Đã yêu thích' : '☆ Thêm vào yêu thích';
+                        } else {
+                            showToast(data.error || 'Không thể cập nhật yêu thích', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Không thể kết nối máy chủ', 'error');
+                    }
+                });
+            }
+
+            // Bình luận: tải danh sách + gửi mới
+            const commentsListEl = document.getElementById('comments-list');
+            async function loadComments() {
+                if (!commentsListEl) return;
+                try {
+                    const res = await fetch('{{ route('/api/phim') }}/' + movieId + '/binh-luan');
+                    const data = await res.json();
+                    if (!data.ok) {
+                        commentsListEl.innerHTML = '<p class="text-xs text-zinc-500">Không thể tải bình luận.</p>';
+                        return;
+                    }
+                    if (!data.comments.length) {
+                        commentsListEl.innerHTML = '<p class="text-xs text-zinc-500">Chưa có bình luận nào. Hãy là người đầu tiên!</p>';
+                        return;
+                    }
+                    commentsListEl.innerHTML = '';
+                    data.comments.forEach((c) => {
+                        const item = document.createElement('div');
+                        item.className = 'rounded-md bg-zinc-900/80 border border-zinc-800 p-3';
+                        item.innerHTML = `
+                            <div class="text-xs font-semibold text-zinc-100 mb-1">${c.user_name ?? 'User'}</div>
+                            <div class="text-sm text-zinc-200 mb-1">${c.content}</div>
+                            <div class="text-[11px] text-zinc-500">${c.created_at || ''}</div>
+                        `;
+                        commentsListEl.appendChild(item);
+                    });
+                } catch (e) {
+                    commentsListEl.innerHTML = '<p class="text-xs text-zinc-500">Không thể tải bình luận.</p>';
+                }
+            }
+
+            loadComments();
+
+            const commentForm = document.getElementById('comment-form');
+            if (commentForm) {
+                commentForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const textarea = commentForm.querySelector('textarea[name="content"]');
+                    if (!textarea || !textarea.value.trim()) {
+                        showToast('Vui lòng nhập nội dung bình luận', 'error');
+                        return;
+                    }
+                    try {
+                        const formData = new FormData();
+                        formData.append('content', textarea.value);
+                        const res = await fetch('{{ route('/api/phim') }}/' + movieId + '/binh-luan', {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                            body: formData,
+                        });
+                        const data = await res.json();
+                        if (data.ok) {
+                            textarea.value = '';
+                            showToast('Đã gửi bình luận');
+                            loadComments();
+                        } else {
+                            showToast(data.error || 'Không thể gửi bình luận', 'error');
+                        }
+                    } catch (e) {
+                        showToast('Không thể kết nối máy chủ', 'error');
+                    }
+                });
+            }
+        })();
+    </script>
 @endsection
 

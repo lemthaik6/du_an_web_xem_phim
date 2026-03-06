@@ -2,80 +2,71 @@
 
 namespace App\Controllers;
 
-use App\Model;
+use App\Models\Movie as MovieModel;
 
-class MovieController extends Model
+/**
+ * Controller hiển thị chi tiết phim và trang xem phim.
+ */
+class MovieController
 {
+    protected MovieModel $movies;
+
+    public function __construct()
+    {
+        $this->movies = new MovieModel();
+    }
+
+    /**
+     * Trang chi tiết phim:
+     * - Poster, mô tả, thể loại, năm, diễn viên (nếu bảng có)
+     * - Danh sách tập
+     * - Bình luận (AJAX riêng)
+     */
     public function show(string $slug)
     {
-        // Demo data – thay bằng query từ DB theo slug
-        $movie = [
-            'id' => 1,
-            'slug' => $slug,
-            'title' => 'Phim demo: ' . str_replace('-', ' ', $slug),
-            'original_title' => 'Demo Movie',
-            'year' => 2024,
-            'duration' => 120,
-            'countries' => ['Việt Nam'],
-            'categories' => ['Hành động', 'Phiêu lưu'],
-            'poster_url' => null,
-            'banner_url' => null,
-            'description' => 'Mô tả phim demo. Sau này sẽ lấy nội dung thật từ cơ sở dữ liệu.',
-            'rating_avg' => 4.5,
-            'rating_count' => 123,
-            'views' => 56789,
-            'status' => 'completed',
-        ];
+        $movie = $this->movies->findBySlug($slug);
+        if (!$movie) {
+            redirect404();
+        }
 
-        $episodes = [
-            ['episode_number' => 1, 'title' => 'Tập 1'],
-            ['episode_number' => 2, 'title' => 'Tập 2'],
-            ['episode_number' => 3, 'title' => 'Tập 3'],
-        ];
+        $episodes = $this->movies->getEpisodes((int)$movie['id']);
+        $relatedMovies = $this->movies->getRelatedMovies((int)$movie['id'], 12);
 
-        $relatedMovies = [
-            ['title' => 'Phim liên quan 1', 'slug' => 'phim-lien-quan-1'],
-            ['title' => 'Phim liên quan 2', 'slug' => 'phim-lien-quan-2'],
-            ['title' => 'Phim liên quan 3', 'slug' => 'phim-lien-quan-3'],
-        ];
-
+        // Bình luận sẽ được tải qua API riêng, ở đây chỉ cần mảng rỗng cho view.
         $comments = [];
 
         return view('movie.show', compact('movie', 'episodes', 'relatedMovies', 'comments'));
     }
 
+    /**
+     * Trang xem phim (player):
+     * - HTML5 video
+     * - Danh sách tập + next/prev
+     * - Tăng lượt xem
+     */
     public function watch(string $slug, int $episodeNumber)
     {
-        $movie = [
-            'id' => 1,
-            'title' => 'Phim demo: ' . str_replace('-', ' ', $slug),
-            'slug' => $slug,
-        ];
-
-        $episodes = [
-            ['episode_number' => 1, 'title' => 'Tập 1'],
-            ['episode_number' => 2, 'title' => 'Tập 2'],
-            ['episode_number' => 3, 'title' => 'Tập 3'],
-        ];
-
-        $currentEpisode = null;
-        foreach ($episodes as $ep) {
-            if ($ep['episode_number'] === $episodeNumber) {
-                $currentEpisode = $ep;
-                break;
-            }
+        $movie = $this->movies->findBySlug($slug);
+        if (!$movie) {
+            redirect404();
         }
 
+        $episodes = $this->movies->getEpisodes((int)$movie['id']);
+        $currentEpisode = $this->movies->getEpisodeByNumber((int)$movie['id'], $episodeNumber);
+
+        if (!$currentEpisode) {
+            redirect404();
+        }
+
+        // Tăng lượt xem tổng cho phim
+        $this->movies->incrementViews((int)$movie['id']);
+
+        // Nguồn video: sử dụng trực tiếp video_url từ bảng episodes
         $sources = [
             [
-                'server' => 'Server 1',
-                'quality' => '1080p',
-                'url' => 'https://example.com/video-demo-1080p',
-            ],
-            [
-                'server' => 'Server 2',
-                'quality' => '720p',
-                'url' => 'https://example.com/video-demo-720p',
+                'server'  => 'Server chính',
+                'quality' => 'HD',
+                'url'     => $currentEpisode['video_url'] ?? '',
             ],
         ];
 
