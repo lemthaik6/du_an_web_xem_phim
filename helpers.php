@@ -153,6 +153,16 @@ if (!function_exists('auth')) {
 }
 
 /**
+ * Alias for auth() - Get current user
+ */
+if (!function_exists('auth_user')) {
+    function auth_user(): ?array
+    {
+        return auth();
+    }
+}
+
+/**
  * Check if a user is authenticated
  * 
  * @return bool True if logged in

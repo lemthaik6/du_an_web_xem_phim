@@ -23,8 +23,9 @@ $router = new Router();
 
 // Public pages
 $router->get('/', HomeController::class . '@index');
-$router->get('/phim/([^/]+)', MovieController::class . '@show'); // slug
-$router->get('/xem/([^/]+)/([0-9]+)', MovieController::class . '@watch'); // slug, episode_number
+$router->get('/danh-sach-phim', MovieController::class . '@index'); // Danh sách phim
+$router->get('/phim/([^/]+)', MovieController::class . '@show'); // Chi tiết phim bằng slug
+$router->get('/xem/([^/]+)/([0-9]+)', MovieController::class . '@watch'); // Xem phim: slug + episode_id
 $router->get('/tim-kiem', SearchController::class . '@index');
 
 // Auth (supports modal via AJAX + fallback pages)
