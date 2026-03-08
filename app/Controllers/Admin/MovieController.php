@@ -150,13 +150,17 @@ class MovieController extends Model
             setFlash('success', 'Thêm phim mới thành công.');
         } catch (\Throwable $e) {
             setFlash('error', 'Không thể thêm phim. Vui lòng thử lại.');
+            error_log('Create movie error: ' . $e->getMessage());
         }
 
         redirect('/admin/phim');
     }
 
-    public function edit(int $id)
+    public function edit($id = null)
     {
+        // Handle both direct string ID and captured param
+        $id = (int)$id;
+        
         $qb = $this->connection->createQueryBuilder();
         $movie = $qb->select('*')
             ->from('movies')
@@ -190,8 +194,11 @@ class MovieController extends Model
         return view('admin.movies.edit', compact('movie', 'categories', 'selectedCategories'));
     }
 
-    public function update(int $id)
+    public function update($id = null)
     {
+        // Handle both direct string ID and captured param
+        $id = (int)$id;
+        
         $validator = new Validator();
         $validation = $validator->make($_POST, [
             'title'       => 'required|min:3',
@@ -285,13 +292,17 @@ class MovieController extends Model
             setFlash('success', 'Cập nhật phim thành công.');
         } catch (\Throwable $e) {
             setFlash('error', 'Không thể cập nhật phim. Vui lòng thử lại.');
+            error_log('Update movie error: ' . $e->getMessage());
         }
 
         redirect('/admin/phim');
     }
 
-    public function destroy(int $id)
+    public function destroy($id = null)
     {
+        // Handle both direct string ID and captured param
+        $id = (int)$id;
+        
         try {
             // Xóa quan hệ thể loại
             try {
@@ -323,6 +334,7 @@ class MovieController extends Model
             setFlash('success', 'Đã xóa phim.');
         } catch (\Throwable $e) {
             setFlash('error', 'Không thể xóa phim.');
+            error_log('Delete movie error: ' . $e->getMessage());
         }
 
         redirect('/admin/phim');

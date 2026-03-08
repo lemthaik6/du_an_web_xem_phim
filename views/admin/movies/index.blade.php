@@ -11,7 +11,7 @@
             </p>
         </div>
         <a
-            href="{{ route('/admin/phim/them') }}"
+            href="/admin/phim/them"
             class="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary-600 hover:bg-primary-500 text-xs md:text-sm font-semibold"
         >
             + Thêm phim mới
@@ -72,13 +72,13 @@
                         <td class="px-3 py-2 text-right">
                             <div class="inline-flex items-center gap-1">
                                 <a
-                                    href="{{ route('/admin/phim/' . $movie['id'] . '/sua') }}"
+                                    href="/admin/phim/{{ $movie['id'] }}/sua"
                                     class="px-2 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-[11px]"
                                 >
                                     Sửa
                                 </a>
                                 <form
-                                    action="{{ route('/admin/phim/' . $movie['id'] . '/xoa') }}"
+                                    action="/admin/phim/{{ $movie['id'] }}/xoa"
                                     method="post"
                                     onsubmit="return confirm('Bạn chắc chắn muốn xóa phim này?');"
                                 >
@@ -111,7 +111,7 @@
             <div class="inline-flex items-center gap-1 text-xs text-zinc-400">
                 @for($p = 1; $p <= $totalPages; $p++)
                     <a
-                        href="{{ route('/admin/phim') . '?page=' . $p }}"
+                        href="/admin/phim?page={{ $p }}"
                         class="px-2 py-1 rounded-md border border-zinc-800 {{ $p === $page ? 'bg-zinc-900' : 'hover:bg-zinc-900' }}"
                     >
                         {{ $p }}

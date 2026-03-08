@@ -3,21 +3,21 @@
 <header class="sticky top-0 z-30 bg-gradient-to-b from-black/80 via-black/70 to-transparent backdrop-blur border-b border-zinc-900">
     <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between gap-4">
         <div class="flex items-center gap-6">
-            <a href="{{ route('/') }}" class="flex items-center gap-2">
+            <a href="/" class="flex items-center gap-2">
                 <span class="w-8 h-8 bg-primary-600 rounded-sm flex items-center justify-center font-bold text-white text-xl">F</span>
                 <span class="hidden sm:inline font-semibold text-lg tracking-wide">FilmStream</span>
             </a>
 
             <nav class="hidden md:flex items-center gap-4 text-sm text-gray-300">
-                <a href="{{ route('/') }}" class="hover:text-white">Trang chủ</a>
-                <a href="{{ route('/tim-kiem') }}" class="hover:text-white">Phim lẻ</a>
-                <a href="{{ route('/tim-kiem') }}" class="hover:text-white">Phim bộ</a>
-                <a href="{{ route('/tim-kiem') }}" class="hover:text-white">Thể loại</a>
+                <a href="/" class="hover:text-white">Trang chủ</a>
+                <a href="/tim-kiem" class="hover:text-white">Phim lẻ</a>
+                <a href="/tim-kiem" class="hover:text-white">Phim bộ</a>
+                <a href="/tim-kiem" class="hover:text-white">Thể loại</a>
             </nav>
         </div>
 
         <div class="flex-1 max-w-xl mx-4 hidden md:block">
-            <form action="{{ route('/tim-kiem') }}" method="get" class="relative">
+            <form action="/tim-kiem" method="get" class="relative">
                 <input
                     type="text"
                     name="q"
@@ -40,7 +40,7 @@
                     </span>
                     <span class="max-w-[120px] truncate">{{ $user['name'] ?? $user['email'] }}</span>
                 </button>
-                <form action="{{ route('/dang-xuat') }}" method="post">
+                <form action="/dang-xuat" method="post">
                     <button
                         class="text-xs px-3 py-1.5 rounded-full border border-zinc-600 hover:border-primary-500 hover:text-primary-400 transition"
                     >

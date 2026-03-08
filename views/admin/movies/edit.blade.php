@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <form action="{{ route('/admin/phim/' . $movie['id'] . '/sua') }}" method="post" enctype="multipart/form-data" class="space-y-4 max-w-3xl">
+    <form action="/admin/phim/{{ $movie['id'] }}/sua" method="post" enctype="multipart/form-data" class="space-y-4 max-w-3xl">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div class="space-y-2">
                 <label class="block text-xs text-zinc-300">Tiêu đề</label>
@@ -179,7 +179,7 @@
 
         <div class="flex items-center justify-between pt-2">
             <a
-                href="{{ route('/admin/phim') }}"
+                href="/admin/phim"
                 class="px-4 py-2 rounded-md border border-zinc-700 text-xs hover:bg-zinc-900"
             >
                 Quay lại danh sách

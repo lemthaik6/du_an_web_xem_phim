@@ -48,5 +48,32 @@ $blade = new \eftec\bladeone\BladeOne(
 // Make blade instance globally available for helpers
 $GLOBALS['blade'] = $blade;
 
+// Normalize REQUEST_URI to remove the subfolder path for router matching
+// Since app is in /du_an_ca_nhan/du_an_web_xem_phim/, we need to strip this prefix
+$appPath = parse_url($_ENV['APP_URL'] ?? 'http://localhost/du_an_ca_nhan/du_an_web_xem_phim/', PHP_URL_PATH);
+$appPath = rtrim($appPath, '/'); // e.g., "/du_an_ca_nhan/du_an_web_xem_phim"
+
+if (!empty($appPath)) {
+    $requestUri = $_SERVER['REQUEST_URI'];
+    // Remove query string if present
+    $requestUri = explode('?', $requestUri)[0];
+    
+    // If REQUEST_URI starts with app path, strip it
+    if (strpos($requestUri, $appPath) === 0) {
+        $normalized = substr($requestUri, strlen($appPath));
+        // Ensure it starts with /
+        if (empty($normalized)) {
+            $normalized = '/';
+        } elseif ($normalized[0] !== '/') {
+            $normalized = '/' . $normalized;
+        }
+        $_SERVER['REQUEST_URI'] = $normalized;
+        // Also update SCRIPT_URL for consistency
+        if (isset($_SERVER['SCRIPT_URL'])) {
+            $_SERVER['SCRIPT_URL'] = $normalized;
+        }
+    }
+}
+
 // Route and run the application
 require_once BASE_PATH . '/routes/web.php';

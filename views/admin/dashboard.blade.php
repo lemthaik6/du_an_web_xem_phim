@@ -32,7 +32,7 @@
         <div class="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-sm font-semibold">Phim mới thêm gần đây</h2>
-                <a href="{{ route('/admin/phim') }}" class="text-[11px] text-zinc-400 hover:text-zinc-200">
+                <a href="/admin/phim" class="text-[11px] text-zinc-400 hover:text-zinc-200">
                     Xem tất cả
                 </a>
             </div>

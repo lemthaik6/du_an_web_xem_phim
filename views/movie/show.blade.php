@@ -25,7 +25,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span>Thời lượng</span>
-                    <span class="font-medium">{{ $movie['duration'] ? $movie['duration'] . ' phút' : 'Đang cập nhật' }}</span>
+                    <span class="font-medium">{{ $movie['duration_minutes'] ? $movie['duration_minutes'] . ' phút' : 'Đang cập nhật' }}</span>
                 </div>
                 <div class="flex justify-between">
                     <span>Trạng thái</span>
@@ -35,7 +35,7 @@
                 </div>
                 <div class="flex justify-between">
                     <span>Lượt xem</span>
-                    <span class="font-medium">{{ number_format($movie['views']) }}</span>
+                    <span class="font-medium">{{ number_format($movie['views_count']) }}</span>
                 </div>
                 <div class="flex justify-between items-center pt-1">
                     <span>Đánh giá</span>
@@ -161,7 +161,20 @@
                     href="{{ route('/phim/' . $rm['slug']) }}"
                     class="group relative bg-zinc-900/80 rounded-md overflow-hidden"
                 >
-                    <div class="aspect-[2/3] bg-zinc-800 group-hover:scale-[1.03] transition-transform duration-300"></div>
+                    <div class="aspect-[2/3] overflow-hidden bg-zinc-800 group-hover:scale-[1.03] transition-transform duration-300">
+                        @if($rm['poster_url'])
+                            <img
+                                src="{{ file_url($rm['poster_url']) }}"
+                                alt="{{ $rm['title'] }}"
+                                class="w-full h-full object-cover"
+                                loading="lazy"
+                            >
+                        @else
+                            <div class="w-full h-full flex items-center justify-center text-zinc-500 text-xs text-center p-2">
+                                {{ $rm['title'] }}
+                            </div>
+                        @endif
+                    </div>
                     <div class="p-2">
                         <div class="text-xs font-medium text-zinc-100 group-hover:text-white line-clamp-2">
                             {{ $rm['title'] }}

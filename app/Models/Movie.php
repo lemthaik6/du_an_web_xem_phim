@@ -57,8 +57,14 @@ class Movie extends Model
 
         try {
             $qb = $this->connection->createQueryBuilder();
-            $qb->select('m.id', 'm.title', 'm.slug', 'm.poster_url', 'm.release_year AS year', 'm.country_id AS country', 'm.views_count')
+            $qb->select(
+                'm.id', 'm.title', 'm.slug', 'm.poster_url', 
+                'm.release_year AS year', 'm.views_count', 'm.status', 
+                'm.duration_minutes', 'm.country_id', 'm.original_title',
+                'COALESCE(c.name, \'\') AS country'
+            )
                 ->from('movies', 'm')
+                ->leftJoin('m', 'countries', 'c', 'c.id = m.country_id')
                 ->where('m.is_published = 1');
 
             if (!empty($filters['q'])) {
@@ -156,7 +162,34 @@ class Movie extends Model
 
         // Chuẩn hóa một số field để view sử dụng thuận tiện
         $movie['categories'] = $this->getCategoriesForMovie((int)$movie['id']);
-        $movie['countries'] = isset($movie['country']) && $movie['country'] ? [$movie['country']] : [];
+        
+        // Map release_year to year for template compatibility
+        if (!isset($movie['year']) && isset($movie['release_year'])) {
+            $movie['year'] = $movie['release_year'];
+        }
+        
+        // Map duration_minutes to duration for template compatibility
+        if (!isset($movie['duration']) && isset($movie['duration_minutes'])) {
+            $movie['duration'] = $movie['duration_minutes'];
+        }
+        
+        // Lấy tên quốc gia từ table countries nếu có country_id
+        $movie['countries'] = [];
+        if (!empty($movie['country_id'])) {
+            try {
+                $qb2 = $this->connection->createQueryBuilder();
+                $country = $qb2->select('c.name')
+                    ->from('countries', 'c')
+                    ->where('c.id = :id')
+                    ->setParameter('id', (int)$movie['country_id'])
+                    ->fetchAssociative();
+                if ($country) {
+                    $movie['countries'] = [$country['name']];
+                }
+            } catch (\Throwable $e) {
+                // Nếu lỗi, để trống
+            }
+        }
 
         // Nếu bảng rating tách riêng, có thể tổng hợp lại ở đây
         if (!isset($movie['rating_avg']) || !isset($movie['rating_count'])) {
@@ -215,14 +248,18 @@ class Movie extends Model
      */
     public function getEpisodes(int $movieId): array
     {
-        $qb = $this->connection->createQueryBuilder();
-        return $qb->select('e.id', 'e.movie_id', 'e.episode_number', 'e.title', 'evs.video_url')
-            ->from('episodes', 'e')
-            ->leftJoin('e', 'episode_video_sources', 'evs', 'e.id = evs.episode_id')
-            ->where('e.movie_id = :mid')
-            ->setParameter('mid', $movieId)
-            ->orderBy('e.episode_number', 'ASC')
-            ->fetchAllAssociative();
+        try {
+            $qb = $this->connection->createQueryBuilder();
+            return $qb->select('e.id', 'e.movie_id', 'e.episode_number', 'e.title', 'e.duration_seconds')
+                ->from('episodes', 'e')
+                ->where('e.movie_id = :mid')
+                ->setParameter('mid', $movieId)
+                ->orderBy('e.episode_number', 'ASC')
+                ->fetchAllAssociative();
+        } catch (\Throwable $e) {
+            error_log('Error fetching episodes: ' . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -264,13 +301,14 @@ class Movie extends Model
     {
         try {
             $qb = $this->connection->createQueryBuilder();
-            $qb->select('DISTINCT m.id', 'm.title', 'm.slug', 'm.poster_url')
+            $qb->select('DISTINCT m.id', 'm.title', 'm.slug', 'm.poster_url', 'm.views_count')
                 ->from('movies', 'm')
                 ->innerJoin('m', 'movie_category', 'mc', 'mc.movie_id = m.id')
                 ->where('mc.category_id IN (
                     SELECT mc2.category_id FROM movie_category mc2 WHERE mc2.movie_id = :mid
                 )')
                 ->andWhere('m.id <> :mid')
+                ->andWhere('m.is_published = 1')
                 ->setParameter('mid', $movieId)
                 ->orderBy('m.views_count', 'DESC')
                 ->setMaxResults($limit);
