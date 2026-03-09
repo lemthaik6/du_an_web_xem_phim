@@ -93,11 +93,11 @@ class ProfileController extends Model
         try {
             $qb = $this->connection->createQueryBuilder();
             $qb->update('users')
-                ->set('name', ':name')
+                ->set('display_name', ':name') // BUG FIX: cột đúng là display_name không phải name
                 ->where('id = :id')
                 ->setParameter('name', $name)
                 ->setParameter('id', $user['id'])
-                ->executeQuery();
+                ->executeStatement();
 
             // Cập nhật lại session auth_user để header hiển thị đúng
             $_SESSION['auth_user']['name'] = $name;
@@ -136,14 +136,14 @@ class ProfileController extends Model
 
         try {
             $qb = $this->connection->createQueryBuilder();
-            $record = $qb->select('password')
+            $record = $qb->select('password_hash') // BUG FIX: cột đúng là password_hash
                 ->from('users')
                 ->where('id = :id')
                 ->setParameter('id', $user['id'])
                 ->setMaxResults(1)
                 ->fetchAssociative();
 
-            $hashed = $record['password'] ?? null;
+            $hashed = $record['password_hash'] ?? null; // BUG FIX: dùng đúng key
             if (!$hashed || !password_verify($_POST['current_password'], $hashed)) {
                 setFlash('error', 'Mật khẩu hiện tại không đúng.');
                 redirect('/tai-khoan');
@@ -153,11 +153,11 @@ class ProfileController extends Model
 
             $qb = $this->connection->createQueryBuilder();
             $qb->update('users')
-                ->set('password', ':pwd')
+                ->set('password_hash', ':pwd') // BUG FIX: cột đúng là password_hash
                 ->where('id = :id')
                 ->setParameter('pwd', $newHash)
                 ->setParameter('id', $user['id'])
-                ->executeQuery();
+                ->executeStatement();
 
             setFlash('success', 'Đổi mật khẩu thành công.');
         } catch (\Throwable $e) {

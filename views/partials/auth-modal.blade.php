@@ -23,7 +23,7 @@
 
         <form
             id="login-form"
-            action="{{ route('/dang-nhap') }}"
+            action="/du_an_ca_nhan/du_an_web_xem_phim/process_login.php"
             method="post"
             class="space-y-3 auth-form"
             data-mode="login"
@@ -54,7 +54,7 @@
 
         <form
             id="register-form"
-            action="{{ route('/dang-ky') }}"
+            action="/du_an_ca_nhan/du_an_web_xem_phim/process_register.php"
             method="post"
             class="space-y-3 auth-form hidden"
             data-mode="register"
@@ -154,22 +154,37 @@
         function bindAjax(form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const formData = new FormData(form);
-                const res = await fetch(form.action, {
-                    method: 'POST',
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                    body: formData,
-                });
-                const data = await res.json();
-                if (data.ok) {
-                    showToast(data.message || 'Thành công');
-                    if (form.dataset.mode === 'login') {
-                        window.location.reload();
-                    } else {
-                        setMode('login');
+                try {
+                    const formData = new FormData(form);
+                    const res = await fetch(form.action, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        body: formData,
+                    });
+
+                    if (!res.ok) {
+                        throw new Error(`HTTP ${res.status}`);
                     }
-                } else {
-                    showToast(data.error || 'Có lỗi xảy ra', 'error');
+
+                    const contentType = res.headers.get('content-type');
+                    if (!contentType || !contentType.includes('application/json')) {
+                        throw new Error('Invalid response type: ' + contentType);
+                    }
+
+                    const data = await res.json();
+                    if (data.ok) {
+                        showToast(data.message || 'Thành công');
+                        if (form.dataset.mode === 'login') {
+                            window.location.reload();
+                        } else {
+                            setMode('login');
+                        }
+                    } else {
+                        showToast(data.error || 'Có lỗi xảy ra', 'error');
+                    }
+                } catch (err) {
+                    console.error('Auth form error:', err);
+                    showToast('Lỗi: ' + err.message, 'error');
                 }
             });
         }

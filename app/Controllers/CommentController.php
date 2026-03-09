@@ -25,7 +25,7 @@ class CommentController extends Model
                     'c.content',
                     'c.parent_id',
                     'c.created_at',
-                    'u.name AS user_name'
+                    'u.display_name AS user_name' // BUG FIX: cột đúng là display_name không phải name
                 )
                 ->from('comments', 'c')
                 ->innerJoin('c', 'users', 'u', 'u.id = c.user_id')

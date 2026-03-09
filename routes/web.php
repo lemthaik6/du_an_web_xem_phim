@@ -60,18 +60,22 @@ $router->before('GET|POST', '/admin(/.*)?', function () {
 });
 
 $router->get('/admin', AdminDashboardController::class . '@index');
+
+// Concrete routes BEFORE pattern routes
 $router->get('/admin/phim', AdminMovieController::class . '@index');
 $router->get('/admin/phim/them', AdminMovieController::class . '@create');
 $router->post('/admin/phim/them', AdminMovieController::class . '@store');
-$router->get('/admin/phim/([0-9]+)/sua', AdminMovieController::class . '@edit');
-$router->post('/admin/phim/([0-9]+)/sua', AdminMovieController::class . '@update');
-$router->post('/admin/phim/([0-9]+)/xoa', AdminMovieController::class . '@destroy');
 
 $router->get('/admin/tap-phim', AdminEpisodeController::class . '@index');
 $router->get('/admin/the-loai', AdminCategoryController::class . '@index');
 $router->get('/admin/nguoi-dung', AdminUserController::class . '@index');
 $router->get('/admin/binh-luan', AdminCommentController::class . '@index');
 $router->get('/admin/banner', AdminBannerController::class . '@index');
+
+// Pattern routes AFTER concrete routes
+$router->get('/admin/phim/([0-9]+)/sua', AdminMovieController::class . '@edit');
+$router->post('/admin/phim/([0-9]+)/sua', AdminMovieController::class . '@update');
+$router->post('/admin/phim/([0-9]+)/xoa', AdminMovieController::class . '@destroy');
 
 // ------------------------
 

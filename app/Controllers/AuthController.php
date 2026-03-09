@@ -38,6 +38,12 @@ class AuthController extends Model
         $password = $_POST['password'];
 
         try {
+            // Kiểm tra connection
+            if (!$this->connection) {
+                error_log('Login error: Database connection failed');
+                return $this->respondAuthError('Lỗi kết nối cơ sở dữ liệu');
+            }
+
             // Tìm user theo email
             $qb = $this->connection->createQueryBuilder();
             $user = $qb->select('*')
@@ -47,7 +53,13 @@ class AuthController extends Model
                 ->setMaxResults(1)
                 ->fetchAssociative();
 
-            if (!$user || !password_verify($password, $user['password_hash'] ?? '')) {
+            if (!$user) {
+                error_log("Login failed: User not found with email: $email");
+                return $this->respondAuthError('Email hoặc mật khẩu không đúng');
+            }
+
+            if (!password_verify($password, $user['password_hash'] ?? '')) {
+                error_log("Login failed: Wrong password for email: $email");
                 return $this->respondAuthError('Email hoặc mật khẩu không đúng');
             }
 
@@ -55,7 +67,7 @@ class AuthController extends Model
                 'id'    => $user['id'],
                 'name'  => $user['display_name'] ?? $user['username'] ?? $user['email'],
                 'email' => $user['email'],
-                'role'  => $user['role_id'] ?? 'user',
+                'role'  => (int)($user['role_id'] ?? 2),
             ];
 
             if ($this->isAjax()) {
@@ -68,7 +80,7 @@ class AuthController extends Model
             setFlash('success', 'Đăng nhập thành công');
             redirect('/');
         } catch (\Throwable $e) {
-            error_log('Login error: ' . $e->getMessage());
+            error_log('Login error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ':' . $e->getLine());
             return $this->respondAuthError('Lỗi hệ thống: ' . $e->getMessage());
         }
     }
@@ -98,6 +110,12 @@ class AuthController extends Model
         $passwordHash = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
         try {
+            // Kiểm tra connection
+            if (!$this->connection) {
+                error_log('Register error: Database connection failed');
+                return $this->respondAuthError('Lỗi kết nối cơ sở dữ liệu');
+            }
+
             // Kiểm tra email đã tồn tại
             $qb = $this->connection->createQueryBuilder();
             $exists = $qb->select('COUNT(*) as c')
@@ -107,6 +125,7 @@ class AuthController extends Model
                 ->fetchOne();
 
             if ((int)$exists > 0) {
+                error_log("Register failed: Email already exists: $email");
                 return $this->respondAuthError('Email này đã được đăng ký');
             }
 
@@ -119,6 +138,7 @@ class AuthController extends Model
                 ->fetchOne();
 
             if ((int)$exists > 0) {
+                error_log("Register failed: Username already exists: $username");
                 return $this->respondAuthError('Tên tài khoản này đã được sử dụng');
             }
 
@@ -134,6 +154,8 @@ class AuthController extends Model
                 'updated_at'   => date('Y-m-d H:i:s'),
             ]);
 
+            error_log("Register success: New user created - $username ($email)");
+
             if ($this->isAjax()) {
                 json([
                     'ok'      => true,
@@ -145,7 +167,7 @@ class AuthController extends Model
             redirect('/dang-nhap');
 
         } catch (\Throwable $e) {
-            error_log('Registration error: ' . $e->getMessage());
+            error_log('Registration error: ' . $e->getMessage() . ' | File: ' . $e->getFile() . ':' . $e->getLine());
             return $this->respondAuthError('Lỗi khi tạo tài khoản: ' . $e->getMessage());
         }
     }

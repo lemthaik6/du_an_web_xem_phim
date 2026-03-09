@@ -3,7 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Model;
-use App\Controller as BaseController;
+use App\Controller;
 use App\Models\Category;
 use Rakit\Validation\Validator;
 
@@ -12,14 +12,15 @@ use Rakit\Validation\Validator;
  * - Danh sách, thêm, sửa, xóa
  * - Upload poster / banner / trailer
  */
-class MovieController extends Model
+class MovieController
 {
-    protected BaseController $uploader;
+    protected Model $model;
+    protected Controller $controller;
 
     public function __construct()
     {
-        parent::__construct();
-        $this->uploader = new BaseController();
+        $this->model = new Model();
+        $this->controller = new Controller();
     }
 
     public function index()
@@ -28,7 +29,7 @@ class MovieController extends Model
         $perPage = 20;
         $offset = ($page - 1) * $perPage;
 
-        $qb = $this->connection->createQueryBuilder();
+        $qb = $this->model->connection->createQueryBuilder();
         $qb->select('id', 'title', 'slug', 'release_year AS year', 'country_id AS country', 'is_published', 'views_count')
             ->from('movies')
             ->orderBy('created_at', 'DESC')
@@ -37,7 +38,7 @@ class MovieController extends Model
 
         $movies = $qb->fetchAllAssociative();
 
-        $total = (int)$this->connection->createQueryBuilder()
+        $total = (int)$this->model->connection->createQueryBuilder()
             ->select('COUNT(*)')
             ->from('movies')
             ->fetchOne();
@@ -64,7 +65,7 @@ class MovieController extends Model
             'title'       => 'required|min:3',
             'slug'        => 'required|min:3',
             'year'        => 'integer',
-            'country'     => 'max:100',
+            'country'     => 'numeric', // BUG FIX: là country_id (int) không phải tên chuỗi
             'description' => 'required|min:10',
         ]);
         $validation->validate();
@@ -88,14 +89,16 @@ class MovieController extends Model
         $trailerUrl = $_POST['trailer_url'] ?? null;
 
         try {
-            if (is_upload('poster')) {
-                $posterPath = $this->uploader->uploadFile($_FILES['poster'], 'posters');
+            // BUG FIX: dùng inline check thay vì is_upload() không tồn tại
+            if (!empty($_FILES['poster']['name']) && $_FILES['poster']['error'] === UPLOAD_ERR_OK) {
+                $posterPath = $this->controller->uploadFile($_FILES['poster'], 'posters');
             }
-            if (is_upload('banner')) {
-                $bannerPath = $this->uploader->uploadFile($_FILES['banner'], 'banners');
+            // BUG FIX: dùng inline check thay vì is_upload() không tồn tại
+            if (!empty($_FILES['banner']['name']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
+                $bannerPath = $this->controller->uploadFile($_FILES['banner'], 'banners');
             }
 
-            $qb = $this->connection->createQueryBuilder();
+            $qb = $this->model->connection->createQueryBuilder();
             $qb->insert('movies')
                 ->values([
                     'title'       => ':title',
@@ -125,14 +128,14 @@ class MovieController extends Model
                 ->setParameter('updated_at', date('Y-m-d H:i:s'))
                 ->executeQuery();
 
-            $movieId = (int)$this->connection->lastInsertId();
+            $movieId = (int)$this->model->connection->lastInsertId();
 
             // Lưu thể loại vào bảng movie_category nếu tồn tại
             $categoryIds = $_POST['category_ids'] ?? [];
             if (!empty($categoryIds) && is_array($categoryIds)) {
                 foreach ($categoryIds as $cid) {
                     try {
-                        $qb = $this->connection->createQueryBuilder();
+                        $qb = $this->model->connection->createQueryBuilder();
                         $qb->insert('movie_category')
                             ->values([
                                 'movie_id'    => ':mid',
@@ -161,7 +164,7 @@ class MovieController extends Model
         // Handle both direct string ID and captured param
         $id = (int)$id;
         
-        $qb = $this->connection->createQueryBuilder();
+        $qb = $this->model->connection->createQueryBuilder();
         $movie = $qb->select('*')
             ->from('movies')
             ->where('id = :id')
@@ -179,7 +182,7 @@ class MovieController extends Model
         try {
             $categories = (new Category())->all();
 
-            $qb = $this->connection->createQueryBuilder();
+            $qb = $this->model->connection->createQueryBuilder();
             $rows = $qb->select('category_id')
                 ->from('movie_category')
                 ->where('movie_id = :mid')
@@ -228,14 +231,17 @@ class MovieController extends Model
         $bannerPath = $_POST['banner_url_old'] ?? null;
 
         try {
-            if (is_upload('poster')) {
-                $posterPath = $this->uploader->uploadFile($_FILES['poster'], 'posters');
+            // BUG FIX: dùng inline check thay vì is_upload() không tồn tại
+            if (!empty($_FILES['poster']['name']) && $_FILES['poster']['error'] === UPLOAD_ERR_OK) {
+                $posterPath = $this->controller->uploadFile($_FILES['poster'], 'posters');
             }
-            if (is_upload('banner')) {
-                $bannerPath = $this->uploader->uploadFile($_FILES['banner'], 'banners');
+            // BUG FIX: dùng inline check thay vì is_upload() không tồn tại
+            if (!empty($_FILES['banner']['name']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
+                $bannerPath = $this->controller->uploadFile($_FILES['banner'], 'banners');
             }
 
-            $qb = $this->connection->createQueryBuilder();
+            // BUG FIX: dùng $this->model->connection vì class không extend Model
+            $qb = $this->model->connection->createQueryBuilder();
             $qb->update('movies')
                 ->set('title', ':title')
                 ->set('slug', ':slug')
@@ -266,7 +272,7 @@ class MovieController extends Model
             // Cập nhật lại thể loại
             $categoryIds = $_POST['category_ids'] ?? [];
             try {
-                $qb = $this->connection->createQueryBuilder();
+                $qb = $this->model->connection->createQueryBuilder();
                 $qb->delete('movie_category')
                     ->where('movie_id = :mid')
                     ->setParameter('mid', $id)
@@ -274,7 +280,7 @@ class MovieController extends Model
 
                 if (!empty($categoryIds) && is_array($categoryIds)) {
                     foreach ($categoryIds as $cid) {
-                        $qb = $this->connection->createQueryBuilder();
+                        $qb = $this->model->connection->createQueryBuilder();
                         $qb->insert('movie_category')
                             ->values([
                                 'movie_id'    => ':mid',
@@ -306,7 +312,7 @@ class MovieController extends Model
         try {
             // Xóa quan hệ thể loại
             try {
-                $qb = $this->connection->createQueryBuilder();
+                $qb = $this->model->connection->createQueryBuilder();
                 $qb->delete('movie_category')
                     ->where('movie_id = :mid')
                     ->setParameter('mid', $id)
@@ -316,7 +322,7 @@ class MovieController extends Model
 
             // Xóa tập phim
             try {
-                $qb = $this->connection->createQueryBuilder();
+                $qb = $this->model->connection->createQueryBuilder();
                 $qb->delete('episodes')
                     ->where('movie_id = :mid')
                     ->setParameter('mid', $id)
@@ -325,7 +331,7 @@ class MovieController extends Model
             }
 
             // Xóa phim
-            $qb = $this->connection->createQueryBuilder();
+            $qb = $this->model->connection->createQueryBuilder();
             $qb->delete('movies')
                 ->where('id = :id')
                 ->setParameter('id', $id)

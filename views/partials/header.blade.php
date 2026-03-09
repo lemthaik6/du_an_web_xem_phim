@@ -32,6 +32,14 @@
 
         <div class="flex items-center gap-3">
             @if($user)
+                @if(($user['role'] ?? null) === 1)
+                    <a
+                        href="/du_an_ca_nhan/du_an_web_xem_phim/admin.php"
+                        class="text-xs px-3 py-1.5 rounded-full border border-yellow-600 hover:border-yellow-500 hover:text-yellow-400 transition"
+                    >
+                        ⚙️ Admin
+                    </a>
+                @endif
                 <button
                     class="hidden sm:flex items-center gap-2 bg-zinc-800/80 hover:bg-zinc-700 text-sm px-3 py-1.5 rounded-full transition"
                 >
@@ -40,7 +48,7 @@
                     </span>
                     <span class="max-w-[120px] truncate">{{ $user['name'] ?? $user['email'] }}</span>
                 </button>
-                <form action="/dang-xuat" method="post">
+                <form action="/du_an_ca_nhan/du_an_web_xem_phim/process_logout.php" method="post">
                     <button
                         class="text-xs px-3 py-1.5 rounded-full border border-zinc-600 hover:border-primary-500 hover:text-primary-400 transition"
                     >

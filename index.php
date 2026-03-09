@@ -14,6 +14,9 @@ require_once BASE_PATH . '/vendor/autoload.php';
 $dotenv = \Dotenv\Dotenv::createImmutable(BASE_PATH);
 $dotenv->safeLoad();
 
+// Load helper functions (CRITICAL: phải load trước khi Blade render view)
+require_once BASE_PATH . '/helpers.php';
+
 // Set up error handling - use environment variable to control debug mode
 $isDebugMode = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
 $GLOBALS['isDebugMode'] = $isDebugMode; // Store in globals for error handler

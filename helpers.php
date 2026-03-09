@@ -310,14 +310,20 @@ if (!function_exists('titleToSlug')) {
 if (!function_exists('route')) {
     function route(string $path, array $params = []): string
     {
-        $baseUrl = rtrim($_ENV['APP_URL'] ?? env('APP_URL', 'http://localhost/du_an_ca_nhan/du_an_web_xem_phim/'), '/');
-        $url = $baseUrl . $path;
+        // For AJAX/internal requests, use relative path only
+        // Extract just the path part from APP_URL
+        $appUrl = $_ENV['APP_URL'] ?? 'http://localhost/du_an_ca_nhan/du_an_web_xem_phim/';
+        $parsedUrl = parse_url($appUrl);
+        $basePath = rtrim($parsedUrl['path'] ?? '/', '/');
+        
+        // Build the full path
+        $fullPath = $basePath . $path;
         
         if (!empty($params)) {
-            $url .= '?' . http_build_query($params);
+            $fullPath .= '?' . http_build_query($params);
         }
         
-        return $url;
+        return $fullPath;
     }
 }
 
@@ -341,5 +347,21 @@ if (!function_exists('file_url')) {
         
         $baseUrl = rtrim($_ENV['APP_URL'] ?? env('APP_URL', 'http://localhost/du_an_ca_nhan/du_an_web_xem_phim/'), '/');
         return $baseUrl . '/' . ltrim($path, '/');
+    }
+}
+
+/**
+ * Kiểm tra file có được upload hợp lệ không
+ * 
+ * @param string $field Tên field trong $_FILES
+ * @return bool True nếu file được upload thành công
+ */
+if (!function_exists('is_upload')) {
+    function is_upload(string $field): bool
+    {
+        return isset($_FILES[$field])
+            && !empty($_FILES[$field]['name'])
+            && $_FILES[$field]['error'] === UPLOAD_ERR_OK
+            && is_uploaded_file($_FILES[$field]['tmp_name']);
     }
 }

@@ -291,7 +291,7 @@ class Movie extends Model
             ->set('views_count', 'views_count + 1')
             ->where('id = :id')
             ->setParameter('id', $movieId)
-            ->executeQuery();
+            ->executeStatement();
     }
 
     /**
@@ -449,10 +449,10 @@ class Movie extends Model
     {
         // Chuyển thành lowercase
         $text = strtolower($text);
-        // Thay thế các ký tự đặc biệt bằng dấu gạch ngang
-        $text = preg_replace('[^a-z0-9-]', '-', $text);
+        // Thay thế các ký tự đặc biệt bằng dấu gạch ngang - BUG FIX: thêm dấu / bao quanh pattern
+        $text = preg_replace('/[^a-z0-9-]+/', '-', $text);
         // Loại bỏ các dấu gạch ngang liên tiếp
-        $text = preg_replace('[-]{2,}', '-', $text);
+        $text = preg_replace('/-{2,}/', '-', $text);
         // Loại bỏ dấu gạch ngang ở đầu và cuối
         $text = trim($text, '-');
         
@@ -564,20 +564,27 @@ class Movie extends Model
                 ->set('poster_url', ':poster')
                 ->set('thumb_url', ':thumb')
                 ->set('release_year', ':year')
-                ->set('country', ':country')
-                ->set('category', ':category')
                 ->set('updated_at', ':updated_at')
                 ->where('id = :id')
                 ->setParameter('id', $movieId)
                 ->setParameter('title', $data['name'] ?? '')
                 ->setParameter('description', $data['description'] ?? '')
-                ->setParameter('poster', $data['poster'] ?? '')
-                ->setParameter('thumb', $data['thumb'] ?? '')
+                ->setParameter('poster', $data['poster'] ?? $data['poster_url'] ?? '')
+                ->setParameter('thumb', $data['thumb'] ?? $data['thumb_url'] ?? '')
                 ->setParameter('year', (int)($data['year'] ?? date('Y')))
-                ->setParameter('country', $data['country'] ?? '')
-                ->setParameter('category', $data['category'] ?? '')
                 ->setParameter('updated_at', date('Y-m-d H:i:s'))
-                ->executeQuery();
+                ->executeStatement();
+
+            // Cập nhật quốc gia qua country_id nếu có
+            if (!empty($data['country_id'])) {
+                $this->connection->createQueryBuilder()
+                    ->update('movies')
+                    ->set('country_id', ':cid')
+                    ->where('id = :id')
+                    ->setParameter('cid', (int)$data['country_id'])
+                    ->setParameter('id', $movieId)
+                    ->executeStatement();
+            }
 
             return true;
         } catch (\Throwable $e) {

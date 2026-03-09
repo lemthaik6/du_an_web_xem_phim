@@ -31,9 +31,10 @@ class EpisodeController extends Model
 
         try {
             $qb = $this->connection->createQueryBuilder();
-            $qb->select('e.id', 'e.episode_number', 'e.title', 'e.movie_id', 'm.title as movie_title', 'e.video_url', 'e.created_at')
+            $qb->select('e.id', 'e.episode_number', 'e.title', 'e.movie_id', 'm.title as movie_title', 'evs.video_url', 'e.created_at') // BUG FIX: video_url nằm trong episode_video_sources
                 ->from('episodes', 'e')
                 ->leftJoin('e', 'movies', 'm', 'e.movie_id = m.id')
+                ->leftJoin('e', 'episode_video_sources', 'evs', 'e.id = evs.episode_id') // BUG FIX: JOIN để lấy video_url
                 ->orderBy('e.movie_id', 'DESC')
                 ->addOrderBy('e.episode_number', 'ASC')
                 ->setFirstResult($offset)
